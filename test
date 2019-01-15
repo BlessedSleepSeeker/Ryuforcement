@@ -1,0 +1,4 @@
+#!/usr/bin/env python3
+
+import retro
+env = retro.make(game='./ROM/StreetFighterIISpecialChampionEdition-Genesis.md')
