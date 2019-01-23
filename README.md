@@ -3,12 +3,13 @@
 ## Introduction
 
 Ryuforcement is a project of reinforcement learning AI designed for playing Street Fighter
+ROM used : https://edgeemu.net/details-38235.htm
 
 ## Installation
 
 ### Requirements
 
-* Gym Retro (https://github.com/openai/retro)
+* Openai Gym Retro (https://github.com/openai/retro)
 
 ### PIP Package
 
