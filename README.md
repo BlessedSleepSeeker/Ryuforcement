@@ -22,7 +22,21 @@ Comming soon...
 
 ## Quick Start
 
-Comming soon...
+Actions are defined with an array of 12.
+Each row correspond a button pressed or not.
+
+array[0] is Medium Kick.
+array[1] is Light Kick.
+array[2] is ??.
+array[3] is ??.
+array[4] is ??.
+array[5] is Up.
+array[6] is Down.
+array[7] is Left.
+array[8] is Right.
+array[9] is Medium Punch.
+array[10] is Light Punch.
+array[11] is Heavy Punch.
 
 ## Key Features
 
