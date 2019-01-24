@@ -61,6 +61,8 @@ env.step() doc:
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array[11] is Heavy Punch.
 
+![alt text](https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/temp/InputManette.png)
+
 * Variables returned:
 	* *_obs*:
 	* *_rew*: Reward of the AI
