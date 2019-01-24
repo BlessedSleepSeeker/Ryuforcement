@@ -21,7 +21,13 @@ Comming soon...
 Comming soon...
 
 ## Quick Start
+After installation,
 
+```. Ryuforcement/bin/activate```
+
+```./Ryuforcement.py```
+
+## Documentation / Explanation
 env.step() doc:
 ```_obs, _rew, done, _info = env.step(yeet)```
 * Variable taken:
