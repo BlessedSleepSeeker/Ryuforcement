@@ -131,4 +131,5 @@ Comming soon...
 ### Changelog & news
 
 0.0.1 : Environnement is functionnal, thanks to Gym Retro
+
 Look at the git logs for further details !
