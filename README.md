@@ -125,3 +125,5 @@ Comming soon...
 0.0.1 : Environnement is functionnal, thanks to Gym Retro
 
 Look at the git logs for further details !
+
+<div style="text-align:left"><img src ="https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/TBagFramePerfect.gif" /></div>
