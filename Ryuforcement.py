@@ -15,11 +15,11 @@ def rgb2gray(rgb):
 if __name__ == '__main__':
 	check_action = 0
 	yeet = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-	
+
 	env = retro.make(game='StreetFighterIISpecialChampionEdition-Genesis')
 	env.reset()
 	env.render()
-	
+
 	while True:
 
 		if check_action == 0:
@@ -28,7 +28,7 @@ if __name__ == '__main__':
 		elif check_action == 1:
 			yeet = [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
 			check_action = 0
-		
+
 		_obs, _rew, done, _info = env.step(yeet)
 
 		_grayObs = rgb2gray(_obs)
@@ -40,4 +40,4 @@ if __name__ == '__main__':
 		time.sleep(0.01)
 
 		if done:
-				break
+			break

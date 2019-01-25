@@ -14,8 +14,10 @@ Ryuforcement plays Ryu. __**SHORYUKEN!!**__
 
 A Note on "importing 1 potential game" "imported 0 games" combo.
 When you try to import a game, Gym Retro check the **sha**'s rom.
+
 You can find the required **sha** for the supported games here :
 https://github.com/openai/retro/tree/master/retro/data/stable/ NAMEOFYOURGAME/rom.sha
+
 Just find a rom with the same sha, and you're good to go !
 
 The Street Fighter II rom we used : https://edgeemu.net/details-38235.htm
@@ -116,4 +118,4 @@ Comming soon...
 ### Changelog & news
 
 0.0.1 : Environnement is functionnal, thanks to Gym Retro
-Look at the git logs !
+Look at the git logs for further details !
