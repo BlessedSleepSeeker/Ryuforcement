@@ -34,7 +34,7 @@ Check if
 
 ### PIP Package
 
-Comming soon...
+```pip install virtualenv```
 
 ### Manual Installation
 
@@ -117,8 +117,8 @@ Comming soon...
 
 ### Contact
 
-	* camille.gouneau@epitech.eu
-	* pierre-eloy.sylvestre@epitech.eu
+- camille.gouneau@epitech.eu
+- pierre-eloy.sylvestre@epitech.eu
 
 ### Known bugs
 
