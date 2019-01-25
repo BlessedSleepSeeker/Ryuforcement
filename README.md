@@ -1,12 +1,29 @@
-# Ryuforcement : Street Fighter II Reinforcement AI
+# Ryuforcement : Fighting Games Reinforcement/Q-Learning AI
 
 ## Introduction
 
-Ryuforcement is a project of reinforcement learning AI designed for playing Street Fighter
+Ryuforcement is a fighting game AI.
+Our mains objective are :
+	* Develop a Reinforcement/Q-Learning algorithm.
+	* Train Ryuforcement, so he can become the Strongest Warrior !
 
-ROM used : https://edgeemu.net/details-38235.htm
+Ryuforcement will learn to play Street Fighter II at first.
+We're using Gym Retro to emulate Street Fighter II : Special Champion Edition, a Genesis game.
+
+Ryuforcement plays Ryu. __**SHORYUKEN!!**__
+
+A Note on "importing 1 potential game" "imported 0 games" combo.
+When you try to import a game, Gym Retro check the **sha**'s rom.
+You can find the required **sha** for the supported games here :
+https://github.com/openai/retro/tree/master/retro/data/stable/ NAMEOFYOURGAME/rom.sha
+Just find a rom with the same sha, and you're good to go !
+
+The Street Fighter II rom we used : https://edgeemu.net/details-38235.htm
 
 ## Installation
+
+Clone the repository where you want.
+Check if
 
 ### Requirements
 
@@ -29,14 +46,14 @@ After installation,
 
 ## Documentation / Explanation
 env.step() doc:
-```_obs, _rew, done, _info = env.step(yeet)```
+```_obs, _rew, done, _info = env.step(action)```
 * Variable taken:
-	* *yeet*: ```yeet = [0,0,0,0,0,0,0,0,0,0,0,0]```
-	
+	* *action*: ```action = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]```
+
 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Actions are defined with an array of 12.
-	
+
 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Each row correspond a button pressed or not.
-	
+
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array[0] is Medium Kick.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array[1] is Light Kick.
@@ -61,7 +78,7 @@ env.step() doc:
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array[11] is Heavy Punch.
 
-![alt text](https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/temp/InputManette.png)
+![alt text](https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/InputManette.png)
 
 * Variables returned:
 	* *_obs*:
@@ -85,7 +102,8 @@ Comming soon...
 
 ### Contact
 
-Comming soon...
+	* camille.gouneau@epitech.eu
+	* pierre-eloy.sylvestre@epitech.eu
 
 ### Known bugs
 
@@ -97,4 +115,5 @@ Comming soon...
 
 ### Changelog & news
 
-Comming soon...
+0.0.1 : Environnement is functionnal, thanks to Gym Retro
+Look at the git logs !
