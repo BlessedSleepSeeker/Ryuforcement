@@ -4,8 +4,8 @@
 
 Ryuforcement is a fighting game AI.
 Our mains objective are :
-	* Develop a Reinforcement/Q-Learning algorithm.
-	* Train Ryuforcement, so he can become the Strongest Warrior !
+- Develop a Reinforcement/Q-Learning algorithm.<br>
+- Train Ryuforcement, so he can become the Strongest Warrior !
 
 Ryuforcement will learn to play Street Fighter II at first.
 We're using Gym Retro to emulate Street Fighter II : Special Champion Edition, a Genesis game.
@@ -34,7 +34,7 @@ Check if
 
 ### PIP Package
 
-Comming soon...
+```pip install virtualenv```
 
 ### Manual Installation
 
@@ -84,7 +84,11 @@ env.step() doc:
 ![alt text](https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/InputManette.png)
 
 * Variables returned:
-	* *_obs*: array () wich represent the current screen : 
+	* *_obs*: array that represents the current screen : 
+	
+	<div style="text-align:left"><img src ="https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/_obsTranformations.png" /></div>
+	
+	
 	* *_rew*: Reward of the AI
 	* *done*: bool who break the loop when the game is over
 	* *_info*: ```{'enemy_matches_won': 0, 'score': 0, 'matches_won': 0, 'continuetimer': 0, 'enemy_health': 176,'health': 176}```
@@ -105,8 +109,8 @@ Comming soon...
 
 ### Contact
 
-	* camille.gouneau@epitech.eu
-	* pierre-eloy.sylvestre@epitech.eu
+- camille.gouneau@epitech.eu
+- pierre-eloy.sylvestre@epitech.eu
 
 ### Known bugs
 
@@ -119,4 +123,5 @@ Comming soon...
 ### Changelog & news
 
 0.0.1 : Environnement is functionnal, thanks to Gym Retro
+
 Look at the git logs for further details !
