@@ -4,8 +4,8 @@
 
 Ryuforcement is a fighting game AI.
 Our mains objective are :
-	* Develop a Reinforcement/Q-Learning algorithm.
-	* Train Ryuforcement, so he can become the Strongest Warrior !
+- Develop a Reinforcement/Q-Learning algorithm.<br>
+- Train Ryuforcement, so he can become the Strongest Warrior !
 
 Ryuforcement will learn to play Street Fighter II at first.
 We're using Gym Retro to emulate Street Fighter II : Special Champion Edition, a Genesis game.
