@@ -84,7 +84,7 @@ env.step() doc:
 ![alt text](https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/InputManette.png)
 
 * Variables returned:
-	* *_obs*:
+	* *_obs*: array () wich represent the current screen : 
 	* *_rew*: Reward of the AI
 	* *done*: bool who break the loop when the game is over
 	* *_info*: ```{'enemy_matches_won': 0, 'score': 0, 'matches_won': 0, 'continuetimer': 0, 'enemy_health': 176,'health': 176}```
