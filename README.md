@@ -16,6 +16,7 @@ A Note on "importing 1 potential game" "imported 0 games" combo.
 When you try to import a game, Gym Retro check the **sha**'s rom.
 
 You can find the required **sha** for the supported games here :
+
 https://github.com/openai/retro/tree/master/retro/data/stable/ NAMEOFYOURGAME/rom.sha
 
 Just find a rom with the same sha, and you're good to go !
