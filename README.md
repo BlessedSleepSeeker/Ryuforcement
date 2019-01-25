@@ -86,15 +86,7 @@ env.step() doc:
 * Variables returned:
 	* *_obs*: array that represents the current screen : 
 	
-	<div style="text-align:left"><img src ="https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/_obs.png" /></div>
-	
-	*_obs*
-	<div style="text-align:left"><img src ="https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/screenBefore.png" /></div>
-	
-	*pixeled array*
-	<div style="text-align:left"><img src ="https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/screenAfter.png" /></div>
-	
-	*optimised image*
+	<div style="text-align:left"><img src ="https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/_obsTranformations.png" /></div>
 	
 	
 	* *_rew*: Reward of the AI
