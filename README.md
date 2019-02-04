@@ -36,12 +36,16 @@ Check if
 
 ```pip install virtualenv```
 
+```pip install retro-gym```
+
 ### Manual Installation
 
 Comming soon...
 
 ## Quick Start
 After installation,
+
+```python3 -m retro.import /path/to/your/ROMs/directory/```
 
 ```. Ryuforcement/bin/activate```
 
