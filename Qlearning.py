@@ -1,76 +1,74 @@
 #!/usr/bin/env python3
+import pandas as pd
 import numpy as np
 from random import randint
 import random
-import pandas as pd
-
 
 class envA(object):
-	def _init_(self):
-		
+	def __init__(self):
+		super(envA, self).__init__()
+		self.St = 2
+		self.r = [-1, -0.1, -0.1, -0.1, 1]
+		self.action = [-1, 1]
 
+	def reset(self):
+		self.St = 2
+		return self.St
+	
+	def step(self, choice):
+		self.St += choice
+		return self.r[self.St], self.St
 
-reward = [-1, -0.1, -0.1, -0.1, 1]
-action = [-1, 1]
+	def show(self):
+		for i in range(5):
+			if i == self.St:
+				print("+", end="")
+			else:
+				print("_", end="")
+		print()
+	
+	def is_finished(self):
+		if self.St == 0 or self.St == 4:
+			return True
+		return False
 
-def step(state, choice):
-	state += choice
-	return reward[state], state
+class player(object):
+	def __init__(self):
+		self.Q = np.zeros((5, 2))
 
-def greedy_step(state, Qlist):
-	#print(state)
-	if (Qlist[0][state] >= Qlist[1][state]):
-		return -1
-	else:
-		return 1
+	def greedy_step(self, St):
+		return np.argmax(self.Q[St])
 
+	def train(self, Qlist, at, env):
+		St1 = env.St + at
+		if (at == -1):
+			at = 0
+		self.Q[env.St][at] += (0.1 * (env.r[St1] + 0.99 * (self.Q[St1][env.action[self.greedy_step(St1)]] - self.Q[env.St][at])))
 
-def greedy_step2(state, Qlist):
-	#print(state)
-	if (Qlist[0][state] >= Qlist[1][state]):
-		return 0
-	else:
-def train(state, Qlist, choice):
-	stachoi = state + choice
-	if (choice == -1):
-		choice = 0
-	Qlist[choice][state] += (0.1 * (reward[stachoi] + 0.99 * (Qlist[greedy_step2(stachoi, Qlist)][stachoi] - Qlist[choice][state])))
-	return Qlist
-
-def play(state, Qlist, eps):
-	choice = None
+def play(env, p, eps):
+	choices = env.action
 	if random.uniform(0, 1) < eps:
-		choice = random.randint(0,1)
-		if (choice == 0):
-			choice = -1
-		print(choice, state+choice)
-		print(pd.DataFrame(Qlist),'\n')
-		#input()
+		random.shuffle(choices)
+		choice = choices[0]
 	else:
-		choice = greedy_step(state, Qlist)
-	#print(choice)
-	#input()
+		choice = env.action[p.greedy_step(env.St)]
 
-	Qlist = train(state, Qlist, choice)
-	reward, state = step(state, choice)
-	if (reward != -0.1):
-		return True, state, Qlist
-	return False, state, Qlist
+	p.train(p.Q, choice, env)
+	env.step(choice)
 
 if __name__ == '__main__':
-	Qlist = [[0, 0, 0, 0, 0],[0, 0, 0, 0, 0]]
+	env = envA()
+	env.show()
+	p = player()
 	eps = 1
-	#print(Qlist[1])
+
 	for i in range(10000):
-		"""if (i % 100 == 0):
-			print(i)"""
-		state = 2
-		endGame = False
-		while (endGame == False):
-			endGame, state, Qlist = play(state, Qlist, eps)
+		st = env.reset()
+		while not env.is_finished():
+			play(env, p, eps)
 			#input()
 		print("------------------", eps)
-		print(pd.DataFrame(Qlist),'\n')
+		print(p.Q,'\n')
 		print("------------------")
 		eps = max(eps * 0.999, 0.05)
 	print("END")
