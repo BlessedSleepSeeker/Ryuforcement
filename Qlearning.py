@@ -41,9 +41,10 @@ class player(object):
 
 	def train(self, Qlist, at, env):
 		St1 = env.St + at
+		at1 = env.action[self.greedy_step(St1)]
 		if (at == -1):
 			at = 0
-		self.Q[env.St][at] += (0.1 * (env.r[St1] + 0.99 * (self.Q[St1][env.action[self.greedy_step(St1)]] - self.Q[env.St][at])))
+		self.Q[env.St][at] += (0.1 * (env.r[St1] + 0.99 * (self.Q[St1][at1] - self.Q[env.St][at])))
 
 def play(env, p, eps):
 	choices = env.action
