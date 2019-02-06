@@ -35,7 +35,10 @@ class envA(object):
 	def randomPlay(self):
 		return self.env.action_space.sample()
 
-	def is_finished(self):
+	def is_finished(self, p):
+		p.win_nb += 1 if self._info['enemy_health'] < 0 else 0
+		p.lose_nb += 1 if self._info['health'] < 0 else 0
+		p.timeout_nb += 1 if self.done else 0
 		if self._info['enemy_health'] < 0 or self._info['health'] < 0 or self.done:
 			return True
 		return False
@@ -74,39 +77,36 @@ class imgA(object):
 
 ################################################
 
-def pick_action(env, eps):
-	if random.uniform(0, 1) < eps:
-		action = env.randomPlay()
-	else:
-		action = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-	return action
+class player(object):
+	def __init__(self):
+		super(player, self).__init__()
+		self.win_nb = 0.
+		self.timeout_nb = 0.
+		self.lose_nb = 0.
+
+	def greedy_step(self, env):
+		print("greedy_step")
+		return 0
+
+	def train(self):
+		print("train")
+
+
+	def play(self, env, eps):
+		if random.uniform(0, 1) < eps:
+			action = env.randomPlay()
+		else:
+			action = self.greedy_step(env)
+			action = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+		return action
 
 ################################################
 
-"""
-def createNetwork():
-	s = tf.placeholder("float", [None, 128, 77])
-"""
-
-################################################
-
-"""
-def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev = 0.01)
-    return tf.Variable(initial)
-
-def bias_variable(shape):
-    initial = tf.constant(0.01, shape = shape)
-    return tf.Variable(initial)
-
-def conv2d(x, W, stride):
-    return tf.nn.conv2d(x, W, strides = [1, stride, stride, 1], padding = "SAME")
-"""
-
-def play(env, sess):
+def play(env, sess, p):
 	env.show()
-	while not env.is_finished():
-		action = pick_action(env, eps)
+	while not env.is_finished(p):
+
+		action = p.play(env, eps)
 
 		_obs, _rew, done, _info = env.step(action)
 
@@ -128,6 +128,7 @@ if __name__ == '__main__':
 
 	# Create env
 	env = envA()
+	p = player()
 	eps = 1
 	
 	sess = tf.InteractiveSession()
@@ -137,6 +138,7 @@ if __name__ == '__main__':
 		if i % 10 == 0:
 			print(i)
 
-		play(env, sess)
+		play(env, sess, p)
+		print("Win :", p.win_nb, "Lose :", p.lose_nb, "Timeout :", p.timeout_nb)
 
 		eps = max(eps * 0.999, 0.05)
