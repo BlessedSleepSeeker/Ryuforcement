@@ -88,7 +88,8 @@ class player(object):
 		print("greedy_step")
 		return 0
 
-	def train(self):
+	def train(self, st, output, action, value):
+		o, at, vt = sess.run([output, action, value], feed_dict={tf_st:st})
 		print("train")
 
 
@@ -102,8 +103,66 @@ class player(object):
 
 ################################################
 
-def play(env, sess, p):
+def create_model():
+	print('\n','\n','\n','\n')
+	width = 128
+	height = 128
+	channel = 4
+
+	tf_st = tf.placeholder(dtype=tf.float32, shape=[None, height, width, channel], name='tf_image')
+	tf_target = tf.placeholder(dtype=tf.float32, shape=[None, 1], name='tf_target')
+	tf_action = tf.placeholder(dtype=tf.int32, shape=[None], name='action')
+
+	# 32 filtre de 8 par 8 pixels qui ce déplace de 4 pixels
+	conv1 = tf.layers.conv2d(tf_st, filters=32, kernel_size=8, strides=4, activation=tf.nn.relu)
+	conv2 = tf.layers.conv2d(conv1, filters=64, kernel_size=4, strides=2, activation=tf.nn.relu)
+	conv3 = tf.layers.conv2d(conv2, filters=64, kernel_size=3, strides=1, activation=tf.nn.relu)
+	# 64 image de 12 par 12 pixels
+
+	print(conv1, '\n',conv2, '\n',conv3)
+
+	# Créé un vecteur a partir des images
+	flattened = tf.contrib.layers.flatten(conv3)
+	# Vecteur de 9216
+
+	print(flattened)
+
+	# 9216 input to 512 neurones
+	fc1 = tf.layers.dense(flattened, 512, activation=tf.nn.relu)
+
+	print(fc1)
+
+	# 512 neurones to 64 output
+	output = tf.layers.dense(fc1, 64, activation=None)
+
+	print(output)
+
+	action = tf.math.argmax(output, axis=1)
+
+	print(action)
+
+	value = tf.math.reduce_max(output, axis=1)
+
+	print(value)
+
+	action_value = tf.gather(tf.reshape(output, [-1]), tf_action)
+
+	error = tf.reduce_mean(tf.squared_difference(action_value, tf_target))
+
+	optimizer = tf.train.RMSPropOptimizer(0.00025, 0.99, 0.0, 1e-6)
+
+	train_op = optimizer.minimize(error)
+	
+	print('\n', '\n','\n','\n')
+
+	return tf.Session(), output, action, value, train_op, error
+
+################################################
+
+def play(env, p, sess, output, action, value, train_op, error):
 	env.show()
+	first = True
+	st = [None, None, None, None]
 	while not env.is_finished(p):
 
 		action = p.play(env, eps)
@@ -117,9 +176,19 @@ def play(env, sess, p):
 		#img.show()
 		img.toOpit()
 		#img.show()
-		img.toResiz(80, 80)
+		img.toResiz(128, 128)
 		#img.show()
 		
+		if first:
+			first = False
+			st = [img.resiz, img.resiz, img.resiz, img.resiz]
+		else:
+			st.append(img.resiz)
+			del st[0]
+		
+
+
+		stp1 = st[:]
 		env.show()
 
 ################################################
@@ -131,14 +200,15 @@ if __name__ == '__main__':
 	p = player()
 	eps = 1
 	
-	sess = tf.InteractiveSession()
+	sess, output, action, value, train_op, error = create_model()
+	sess.run(tf.global_variables_initializer())
 	for i in range(1000):
 		env.reset()
 
 		if i % 10 == 0:
 			print(i)
 
-		play(env, sess, p)
+		play(env, p, sess, output, action, value, train_op, error)
 		print("Win :", p.win_nb, "Lose :", p.lose_nb, "Timeout :", p.timeout_nb)
 
 		eps = max(eps * 0.999, 0.05)
