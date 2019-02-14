@@ -29,7 +29,15 @@ class envA(object):
 		self.env.render()
 
 	def step(self, action):
-		self._obs, self._rew, self.done, self._info = self.env.step(action)
+		self._obs, _, self.done, _info = self.env.step(action)
+		self._rew = self._info['enemy_health'] - _info['enemy_health'] - self._info['health'] - _info['health']
+		"""if (_info['enemy_health'] < self._info['enemy_health']):
+			self._rew = 1
+		elif (_info['health'] < self._info['health']):
+			self._rew = -1
+		else:
+			self._rew = 0"""
+		self._info = _info
 		return self._obs, self._rew, self.done, self._info
 
 	def randomPlay(self):
@@ -45,35 +53,17 @@ class envA(object):
 
 ################################################
 
-class imgA(object):
-	def __init__(self, array):
-		super(imgA, self).__init__()
-		self.array = array
-		self.gray = [[None]]
-		self.opti = [[None]]
-		self.resiz = [[None]]
-		self.actSize = [len(array), len(array[0])]
+class stateProcessor(object):
+	def __init__(self): #Create an sess of image transformation
+		with tf.variable_scope("process"): # Image size 200 256
+			self.input_state = tf.placeholder(shape=[200, 256, 3], dtype=tf.uint8, name="input_process")
+			self.output = tf.image.rgb_to_grayscale(self.input_state)
+			self.output = tf.image.crop_to_bounding_box(self.output, 28, 0, 158, 256)
+			self.output = tf.image.resize_images(self.output, [128, 128], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+			self.output = tf.squeeze(self.output)
 
-	def toGray(self):
-		self.gray = np.dot(self.array[...,:3], [0.299, 0.587, 0.114])
-		return self.gray
-	
-	def toOpit(self):
-		self.opti = self.gray[28:182]
-		self.actSize = [len(self.opti), len(self.opti[0])]
-		return self.opti
-	
-	def toResiz(self, x, y):
-		self.resiz = cv2.resize(self.opti, dsize=(x, y), interpolation=cv2.INTER_CUBIC)
-		self.actSize = [x, y]
-		return self.resiz
-	
-	def show(self):
-		plt.imshow(self.array)
-		plt.imshow(self.gray) if self.gray[0][0] != None else 0
-		plt.imshow(self.opti) if self.opti[0][0] != None else 0
-		plt.imshow(self.resiz) if self.resiz[0][0] != None else 0
-		plt.show()
+	def process(self, sess, state)	:
+		return sess.run(self.output, {self.input_state:state})
 
 ################################################
 
@@ -88,8 +78,12 @@ class player(object):
 		print("greedy_step")
 		return 0
 
-	def train(self, st, output, action, value):
+	def train(self, st, output, action, value, tf_st, stp1, tf_target, tf_action, r):
+		print(tf_st, '\n\n\n')	
 		o, at, vt = sess.run([output, action, value], feed_dict={tf_st:st})
+		_, _, vtp1 = sess.run([output, action, value], feed_dict={tf_st: stp1})
+		target = [r + 0.99*vtp1]
+		_, err = sess.run([train_op, error], feed_dict={tf_st: st, tf_target: target, tf_action: at})
 		print("train")
 
 
@@ -98,7 +92,7 @@ class player(object):
 			action = env.randomPlay()
 		else:
 			action = self.greedy_step(env)
-			action = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+			action = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
 		return action
 
 ################################################
@@ -111,7 +105,7 @@ def create_model():
 
 	tf_st = tf.placeholder(dtype=tf.float32, shape=[None, height, width, channel], name='tf_image')
 	tf_target = tf.placeholder(dtype=tf.float32, shape=[None, 1], name='tf_target')
-	tf_action = tf.placeholder(dtype=tf.int32, shape=[None], name='action')
+	tf_action = tf.placeholder(dtype=tf.int32, shape=[None], name='tf_action')
 
 	# 32 filtre de 8 par 8 pixels qui ce déplace de 4 pixels
 	conv1 = tf.layers.conv2d(tf_st, filters=32, kernel_size=8, strides=4, activation=tf.nn.relu)
@@ -155,40 +149,27 @@ def create_model():
 	
 	print('\n', '\n','\n','\n')
 
-	return tf.Session(), output, action, value, train_op, error
+	return output, action, value, train_op, error, tf_st, tf_target, tf_action
 
 ################################################
 
-def play(env, p, sess, output, action, value, train_op, error):
+def play(env, p, state_processor, sess, output, action, value, train_op, error, tf_st, tf_target, tf_action):
+	st = env.reset()
+	st = np.stack([state_processor.process(sess, st)] * 4, axis=2)
 	env.show()
-	first = True
-	st = [None, None, None, None]
+
+	act = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
 	while not env.is_finished(p):
 
-		action = p.play(env, eps)
-
-		_obs, _rew, done, _info = env.step(action)
-
-		#FIT IMAGE
-		img = imgA(_obs)
-		#img.show()
-		img.toGray()
-		#img.show()
-		img.toOpit()
-		#img.show()
-		img.toResiz(128, 128)
-		#img.show()
-		
-		if first:
-			first = False
-			st = [img.resiz, img.resiz, img.resiz, img.resiz]
-		else:
-			st.append(img.resiz)
-			del st[0]
-		
+		act = p.play(env, eps)
+		# Step in the env with this action
+		stp1, r, _, _ = env.step(act)
+		stp1 = state_processor.process(sess, stp1)
+		p.train(st, output, action, value, tf_st, stp1, tf_target, tf_action, r)
 
 
-		stp1 = st[:]
+		st = stp1[:]
 		env.show()
 
 ################################################
@@ -198,17 +179,19 @@ if __name__ == '__main__':
 	# Create env
 	env = envA()
 	p = player()
+	state_processor = stateProcessor()
 	eps = 1
 	
-	sess, output, action, value, train_op, error = create_model()
+	output, action, value, train_op, error, tf_st, tf_target, tf_action = create_model()
+	
+	sess = tf.Session()
 	sess.run(tf.global_variables_initializer())
+	
 	for i in range(1000):
-		env.reset()
-
 		if i % 10 == 0:
 			print(i)
 
-		play(env, p, sess, output, action, value, train_op, error)
+		play(env, p, state_processor, sess, output, action, value, train_op, error, tf_st, tf_target, tf_action)
 		print("Win :", p.win_nb, "Lose :", p.lose_nb, "Timeout :", p.timeout_nb)
 
 		eps = max(eps * 0.999, 0.05)
