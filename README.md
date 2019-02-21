@@ -85,14 +85,64 @@ env.step() doc:
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array[11] is Heavy Punch.
 
+Possible actions are :
+
+- Movements :
+Neutral = 		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Right = 		[0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+Left = 			[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+Crouch = 		[0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+Crouch Right = 	[0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0]
+Crouch Left = 	[0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0]
+Jump Neutral = 	[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+Jump Right =	[0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0]
+Jump Left =		[0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0]
+
+- Normals :
+
+Standing Low Punch =	[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+Standing Medium Punch =	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+Standing High Punch =	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+Standing Low Kick =		[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Standing Medium Kick =	[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Standing High Kick =	[0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] # Doesn't seems to work
+
+Crouching Low Punch =		[0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0]
+Crouching Medium Punch =	[0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0]
+Crouching High Punch =		[0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1]
+Crouching Low Kick =		[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+Crouching Medium Kick =		[0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+Crouching High Kick =		[0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0] # Doesn't seems to work
+
+Specials :
+
+This still need research
+
+Slow Hadoken =		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Medium Hadoken =	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Fast Hadoken =		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+Slow Shoryuken =	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Medium Shoryuken =	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Fast Shoryuken =	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+Slow Tatsumaki =	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Medium Tatsumaki =	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Fast Tatsumaki =	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+Throw :
+
+Left Throw
+Right Throw
+
 ![alt text](https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/InputManette.png)
 
 * Variables returned:
-	* *_obs*: array that represents the current screen : 
-	
+	* *_obs*: array that represents the current screen :
+
 	<div style="text-align:left"><img src ="https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/_obsTranformations.png" /></div>
-	
-	
+
+
 	* *_rew*: Reward of the AI
 	* *done*: bool who break the loop when the game is over
 	* *_info*: ```{'enemy_matches_won': 0, 'score': 0, 'matches_won': 0, 'continuetimer': 0, 'enemy_health': 176,'health': 176}```
