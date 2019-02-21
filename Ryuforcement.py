@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-import retro
 import sys
-import time
-import random
 import cv2
-import matplotlib.pyplot as plt
+import time
+import retro
+import random
+import scipy.misc
+import collections
 import numpy as np
 import tensorflow as tf
-import scipy.misc
+import matplotlib.pyplot as plt
 
 ################################################
 
@@ -23,7 +24,7 @@ class envA(object):
 	def reset(self):
 		self.done = False
 		self._info = {'enemy_matches_won': 0, 'score': 0, 'matches_won': 0, 'continuetimer': 0, 'enemy_health': 176,'health': 176}
-		self.env.reset()
+		return self.env.reset()
 
 	def show(self):
 		self.env.render()
@@ -153,9 +154,10 @@ def create_model():
 
 ################################################
 
-def play(env, p, state_processor, sess, output, action, value, train_op, error, tf_st, tf_target, tf_action):
+def play(env, p, state_processor, sess, output, action, value, train_op, error, tf_st, tf_target, tf_action, rp_memory, Transition):
 	st = env.reset()
 	st = np.stack([state_processor.process(sess, st)] * 4, axis=2)
+	print(st.shape)
 	env.show()
 
 	act = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -163,9 +165,21 @@ def play(env, p, state_processor, sess, output, action, value, train_op, error, 
 	while not env.is_finished(p):
 
 		act = p.play(env, eps)
+
 		# Step in the env with this action
 		stp1, r, _, _ = env.step(act)
+
+		# Process image
 		stp1 = state_processor.process(sess, stp1)
+
+		# Add the image to the array
+		stp1 = np.append(st[:,:,1:], np.expand_dims(stp1, 2), axis=2)
+
+		if len(rp_memory) == 250000:
+			rp_memory.pop(0)
+
+		rp_memory.append(Transition(st, act, r, stp1, env.done))
+
 		p.train(st, output, action, value, tf_st, stp1, tf_target, tf_action, r)
 
 
@@ -181,6 +195,9 @@ if __name__ == '__main__':
 	p = player()
 	state_processor = stateProcessor()
 	eps = 1
+	rp_memory = []
+
+	Transition = namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
 	
 	output, action, value, train_op, error, tf_st, tf_target, tf_action = create_model()
 	
@@ -191,7 +208,7 @@ if __name__ == '__main__':
 		if i % 10 == 0:
 			print(i)
 
-		play(env, p, state_processor, sess, output, action, value, train_op, error, tf_st, tf_target, tf_action)
+		play(env, p, state_processor, sess, output, action, value, train_op, error, tf_st, tf_target, tf_action, rp_memory, Transition)
 		print("Win :", p.win_nb, "Lose :", p.lose_nb, "Timeout :", p.timeout_nb)
 
 		eps = max(eps * 0.999, 0.05)
