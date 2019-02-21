@@ -5,10 +5,10 @@ import time
 import retro
 import random
 import scipy.misc
-import collections
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
+from collections import namedtuple
 
 ################################################
 
@@ -79,12 +79,12 @@ class player(object):
 		print("greedy_step")
 		return 0
 
-	def train(self, st, output, action, value, tf_st, stp1, tf_target, tf_action, r):
-		print(tf_st, '\n\n\n')	
-		o, at, vt = sess.run([output, action, value], feed_dict={tf_st:st})
-		_, _, vtp1 = sess.run([output, action, value], feed_dict={tf_st: stp1})
+	def train(self, st, net, stp1, r):
+		print(net.tf_st, '\n\n\n')	
+		o, at, vt = sess.run([net.output, net.action, net.value], feed_dict={net.tf_st:st})
+		_, _, vtp1 = sess.run([net.output, net.action, net.value], feed_dict={net.tf_st: stp1})
 		target = [r + 0.99*vtp1]
-		_, err = sess.run([train_op, error], feed_dict={tf_st: st, tf_target: target, tf_action: at})
+		_, err = sess.run([net.train_op, net.error], feed_dict={net.tf_st: st, net.tf_target: target, net.tf_action: at})
 		print("train")
 
 
@@ -98,63 +98,75 @@ class player(object):
 
 ################################################
 
-def create_model():
-	print('\n','\n','\n','\n')
-	width = 128
-	height = 128
-	channel = 4
+class Network():
+	def __init__(self, scope):
+		self.width = 128
+		self.height = 128
+		self.channel = 4
+		self.scope = scope
+		with tf.variable_scope(self.scope):
+			self._build_model()
 
-	tf_st = tf.placeholder(dtype=tf.float32, shape=[None, height, width, channel], name='tf_image')
-	tf_target = tf.placeholder(dtype=tf.float32, shape=[None, 1], name='tf_target')
-	tf_action = tf.placeholder(dtype=tf.int32, shape=[None], name='tf_action')
+	def _build_model(self):
+		# 4 last frames of the game
+		self.tf_st = tf.placeholder(dtype=tf.float32, shape=[None, self.height, self.width, self.channel], name='tf_image')
+		self.tf_target = tf.placeholder(dtype=tf.float32, shape=[None, 1], name='tf_target')
+		self.tf_action = tf.placeholder(dtype=tf.int32, shape=[None], name='tf_action')
 
-	# 32 filtre de 8 par 8 pixels qui ce déplace de 4 pixels
-	conv1 = tf.layers.conv2d(tf_st, filters=32, kernel_size=8, strides=4, activation=tf.nn.relu)
-	conv2 = tf.layers.conv2d(conv1, filters=64, kernel_size=4, strides=2, activation=tf.nn.relu)
-	conv3 = tf.layers.conv2d(conv2, filters=64, kernel_size=3, strides=1, activation=tf.nn.relu)
-	# 64 image de 12 par 12 pixels
+		# 32 filter with a size of 8 by 8 pixels, that move  4 pixels
+		conv1 = tf.layers.conv2d(self.tf_st, filters=32, kernel_size=8, strides=4, activation=tf.nn.relu)
+		conv2 = tf.layers.conv2d(conv1, filters=64, kernel_size=4, strides=2, activation=tf.nn.relu)
+		conv3 = tf.layers.conv2d(conv2, filters=64, kernel_size=3, strides=1, activation=tf.nn.relu)
+		# 64 image  with a size of 12 by 12 pixels
 
-	print(conv1, '\n',conv2, '\n',conv3)
+		print(conv1, '\n',conv2, '\n',conv3)
 
-	# Créé un vecteur a partir des images
-	flattened = tf.contrib.layers.flatten(conv3)
-	# Vecteur de 9216
+		# Create a vector with thes images
+		flattened = tf.contrib.layers.flatten(conv3)
+		# 9216 vector 
 
-	print(flattened)
+		print(flattened)
 
-	# 9216 input to 512 neurones
-	fc1 = tf.layers.dense(flattened, 512, activation=tf.nn.relu)
+		# 9216 input to 512 neurones
+		fc1 = tf.layers.dense(flattened, 512, activation=tf.nn.relu)
 
-	print(fc1)
+		print(fc1)
 
-	# 512 neurones to 64 output
-	output = tf.layers.dense(fc1, 64, activation=None)
+		# 512 neurones to 64 output
+		self.output = tf.layers.dense(fc1, 64, activation=None) # <- 64 doit devenir le nombre d'action possible
 
-	print(output)
+		print(self.output)
 
-	action = tf.math.argmax(output, axis=1)
+		self.action = tf.math.argmax(self.output, axis=1)
 
-	print(action)
+		print(self.action)
 
-	value = tf.math.reduce_max(output, axis=1)
+		self.value = tf.math.reduce_max(self.output, axis=1)
 
-	print(value)
+		print(self.value)
 
-	action_value = tf.gather(tf.reshape(output, [-1]), tf_action)
+		self.action_value = tf.gather(tf.reshape(self.output, [-1]), self.tf_action)
 
-	error = tf.reduce_mean(tf.squared_difference(action_value, tf_target))
+		self.error = tf.reduce_mean(tf.squared_difference(self.action_value, self.tf_target))
 
-	optimizer = tf.train.RMSPropOptimizer(0.00025, 0.99, 0.0, 1e-6)
+		self.optimizer = tf.train.RMSPropOptimizer(0.00025, 0.99, 0.0, 1e-6)
 
-	train_op = optimizer.minimize(error)
-	
-	print('\n', '\n','\n','\n')
+		self.train_op = self.optimizer.minimize(self.error)
+		
+		print('\n', '\n','\n','\n')
 
-	return output, action, value, train_op, error, tf_st, tf_target, tf_action
+	def predict(self, sess, s):
+		return sess.run(self.output, {self.tf_st:s})
+
+	def update(self, sess, s, a, y):
+		feed_dict = {self.tf_st:s, self.tf_target:y, self.tf_action:a}
+		ops = [self.train_op, self.error]
+		_, loss = sess.run(ops, feed_dict)
+		return loss
 
 ################################################
 
-def play(env, p, state_processor, sess, output, action, value, train_op, error, tf_st, tf_target, tf_action, rp_memory, Transition):
+def play(env, p, state_processor, sess, net, rp_memory, Transition):
 	st = env.reset()
 	st = np.stack([state_processor.process(sess, st)] * 4, axis=2)
 	print(st.shape)
@@ -162,6 +174,7 @@ def play(env, p, state_processor, sess, output, action, value, train_op, error, 
 
 	act = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
+	len_rp_memory = len(rp_memory)
 	while not env.is_finished(p):
 
 		act = p.play(env, eps)
@@ -180,7 +193,13 @@ def play(env, p, state_processor, sess, output, action, value, train_op, error, 
 
 		rp_memory.append(Transition(st, act, r, stp1, env.done))
 
-		p.train(st, output, action, value, tf_st, stp1, tf_target, tf_action, r)
+		if len_rp_memory > 50000:
+			samples = random.sample(rp_memory, 32)
+			st_batch, act_batch, r_batch, stp1_batch, done_batch = map(np.array, zip(*samples))
+
+
+
+		p.train(st, net, stp1, r)
 
 
 		st = stp1[:]
@@ -194,21 +213,20 @@ if __name__ == '__main__':
 	env = envA()
 	p = player()
 	state_processor = stateProcessor()
+	net = Network(scope="net")
 	eps = 1
 	rp_memory = []
-
-	Transition = namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
-	
-	output, action, value, train_op, error, tf_st, tf_target, tf_action = create_model()
 	
 	sess = tf.Session()
 	sess.run(tf.global_variables_initializer())
+	
+	Transition = namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
 	
 	for i in range(1000):
 		if i % 10 == 0:
 			print(i)
 
-		play(env, p, state_processor, sess, output, action, value, train_op, error, tf_st, tf_target, tf_action, rp_memory, Transition)
+		play(env, p, state_processor, sess, net, rp_memory, Transition)
 		print("Win :", p.win_nb, "Lose :", p.lose_nb, "Timeout :", p.timeout_nb)
 
 		eps = max(eps * 0.999, 0.05)
