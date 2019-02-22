@@ -175,6 +175,7 @@ def play(env, p, state_processor, sess, net, rp_memory, Transition):
 	act = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 	len_rp_memory = len(rp_memory)
+
 	while not env.is_finished(p):
 
 		act = p.play(env, eps)
@@ -197,7 +198,7 @@ def play(env, p, state_processor, sess, net, rp_memory, Transition):
 			samples = random.sample(rp_memory, 32)
 			st_batch, act_batch, r_batch, stp1_batch, done_batch = map(np.array, zip(*samples))
 
-
+			q_values_next_target = target_
 
 		p.train(st, net, stp1, r)
 
@@ -214,6 +215,7 @@ if __name__ == '__main__':
 	p = player()
 	state_processor = stateProcessor()
 	net = Network(scope="net")
+	t_net = Network(scope="t_net")
 	eps = 1
 	rp_memory = []
 	
