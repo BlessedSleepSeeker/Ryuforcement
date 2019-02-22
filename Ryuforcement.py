@@ -20,7 +20,7 @@ class envA(object):
 		self._rew = None
 		self.done = False
 		self._info = {'enemy_matches_won': 0, 'score': 0, 'matches_won': 0, 'continuetimer': 0, 'enemy_health': 176,'health': 176}
-	
+
 	def reset(self):
 		self.done = False
 		self._info = {'enemy_matches_won': 0, 'score': 0, 'matches_won': 0, 'continuetimer': 0, 'enemy_health': 176,'health': 176}
@@ -74,13 +74,26 @@ class player(object):
 		self.win_nb = 0.
 		self.timeout_nb = 0.
 		self.lose_nb = 0.
+		self.Q = np.zeros((65536, 21))
+
+	#Qtable is loaded from .npy file
+	def loadQTable(self, filename):
+		try:
+			self.Q = np.load("LearningFiles/" + filename + ".npy")
+		except IOError:
+			print("Could not read file : '" + filename + "'. QTable will be empty.")
+			self.Q = np.zeros((65536, 21))
+
+	#Qtable is saved as an .npy file
+	def saveQTable(self, filename):
+		np.save("LearningFiles/" + filename, self.Q)
 
 	def greedy_step(self, env):
 		print("greedy_step")
 		return 0
 
 	def train(self, st, net, stp1, r):
-		print(net.tf_st, '\n\n\n')	
+		print(net.tf_st, '\n\n\n')
 		o, at, vt = sess.run([net.output, net.action, net.value], feed_dict={net.tf_st:st})
 		_, _, vtp1 = sess.run([net.output, net.action, net.value], feed_dict={net.tf_st: stp1})
 		target = [r + 0.99*vtp1]
@@ -123,7 +136,7 @@ class Network():
 
 		# Create a vector with thes images
 		flattened = tf.contrib.layers.flatten(conv3)
-		# 9216 vector 
+		# 9216 vector
 
 		print(flattened)
 
@@ -152,7 +165,7 @@ class Network():
 		self.optimizer = tf.train.RMSPropOptimizer(0.00025, 0.99, 0.0, 1e-6)
 
 		self.train_op = self.optimizer.minimize(self.error)
-		
+
 		print('\n', '\n','\n','\n')
 
 	def predict(self, sess, s):
@@ -218,17 +231,23 @@ if __name__ == '__main__':
 	t_net = Network(scope="t_net")
 	eps = 1
 	rp_memory = []
-	
+
 	sess = tf.Session()
 	sess.run(tf.global_variables_initializer())
-	
+
 	Transition = namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
-	
+
+	importFileQTable, exportFileQTable = handleArgs()
+
+	p.loadQTable(importFileQTable)
+
 	for i in range(1000):
 		if i % 10 == 0:
 			print(i)
 
 		play(env, p, state_processor, sess, net, rp_memory, Transition)
 		print("Win :", p.win_nb, "Lose :", p.lose_nb, "Timeout :", p.timeout_nb)
+
+		p.saveQTable(exportFileQTable)
 
 		eps = max(eps * 0.999, 0.05)
