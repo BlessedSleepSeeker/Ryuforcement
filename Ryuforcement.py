@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import sys
-import cv2
 import time
 import retro
 import random
