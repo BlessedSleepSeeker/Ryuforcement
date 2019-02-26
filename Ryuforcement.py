@@ -30,7 +30,7 @@ class envA(object):
 		self.env.render()
 
 	def step(self, action):
-		print("\n\n>>>>>>>>>>>>", action)
+		#print("\n\n>>>>>>>>>>>>", action)
 		self._obs, _, self.done, _info = self.env.step(set_actions()[action])
 		self._rew = (self._info['enemy_health'] - _info['enemy_health']) - (self._info['health'] - _info['health'])
 		#print(self._rew)
@@ -48,6 +48,12 @@ class envA(object):
 		return self.env.action_space.sample()
 
 	def is_finished(self, p):
+		if self._info['enemy_health'] < 0:
+			p.lastHundred.append(1)
+		elif self._info['health'] < 0:
+			p.lastHundred.append(-1)
+		if (len(p.lastHundred) > 100):
+			p.lastHundred.pop(0)
 		p.win_nb += 1 if self._info['enemy_health'] < 0 else 0
 		p.lose_nb += 1 if self._info['health'] < 0 else 0
 		p.timeout_nb += 1 if self.done else 0
@@ -77,6 +83,7 @@ class player(object):
 		self.win_nb = 0.
 		self.timeout_nb = 0.
 		self.lose_nb = 0.
+		self.lastHundred = []
 		self.Q = np.zeros((65536, 21))
 
 	#Qtable is loaded from .npy file
@@ -128,7 +135,7 @@ class Network():
 		print('\n', '---------------------------','\n')
 		# 4 last frames of the game
 		self.tf_st = tf.placeholder(dtype=tf.float32, shape=[None, self.height, self.width, self.channel], name='tf_image')
-		self.tf_target = tf.placeholder(dtype=tf.float32, shape=[None, 1], name='tf_target')
+		self.tf_target = tf.placeholder(dtype=tf.float32, shape=[None], name='tf_target')
 		self.tf_action = tf.placeholder(dtype=tf.int32, shape=[None], name='tf_action')
 
 		# 32 filter with a size of 8 by 8 pixels, that move  4 pixels
@@ -216,11 +223,11 @@ def set_actions():
 def make_eps_greedy_policy(estimator, nA):
 	def policy_fn(sess, observation, eps):
 		A = np.ones(nA, dtype=float) * eps / nA
-		print("\n---------------------\nA =", A, "\n---------------------")
+		#print("\n---------------------\nA =", A, "\n---------------------")
 		q_values = estimator.predict(sess, np.expand_dims(observation, 0))[0]
-		print("\n---------------------\nq_values =", q_values, "\n---------------------")
+		#print("\n---------------------\nq_values =", q_values, "\n---------------------")
 		best_act = np.argmax(q_values)
-		print("\n---------------------\nbest_act =", best_act, "\n---------------------")
+		#print("\n---------------------\nbest_act =", best_act, "\n---------------------")
 		A[best_act] += (1.0 - eps)
 		return A
 	return policy_fn
@@ -341,7 +348,7 @@ if __name__ == '__main__':
 
 	opti_step = -1
 	
-	with tf.Session() as sess:
+	with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
 		sess.run(tf.global_variables_initializer())
 
 		Transition = namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
@@ -356,8 +363,8 @@ if __name__ == '__main__':
 		ladt_chckpnt = tf.train.latest_checkpoint(chkpnt_dir)
 
 		valid_actions = set_actions()
-		print("000000000000000000000000000000000")
-		print(len(valid_actions))
+		#print("000000000000000000000000000000000")
+		#print(len(valid_actions))
 		policy = make_eps_greedy_policy(net, len(valid_actions))
 
 		epi_r = []
@@ -370,6 +377,8 @@ if __name__ == '__main__':
 		p.loadQTable(importFileQTable)"""
 
 		for i in range(num_episode):
+			if i == num_episode-1:
+				input("\n\n\n---------------------------------\nReady to launch\n")
 			if i % 100 == 0:
 				print(i)
 
@@ -379,12 +388,12 @@ if __name__ == '__main__':
 			r_sum = 0
 			mean_epi_r = np.mean(epi_r)
 			if best_epi_r < mean_epi_r:
-				print(best_epi_r, mean_epi_r)
+				#print(best_epi_r, mean_epi_r)
 				best_epi_r = mean_epi_r
 				saver.save(tf.get_default_session(), chkpnt_path)
 				#input()
 
-			print(st.shape)
+			#print(st.shape)
 			#env.show()
 
 			act = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -397,8 +406,8 @@ if __name__ == '__main__':
 				if opti_step % update_target_estimator_every == 0:
 					copy_model_parameters(sess, net, t_net)
 
-				print("\r Epsilon ({}) ReplayMemorySize : ({}) rSum: ({}) best_epi_reward: ({}) OptiStep ({}) @ Episode {}/{}, loss: {}".format(eps, len_rp_memory, mean_epi_r, best_epi_r, opti_step, i + 1, num_episode, loss), end="")
-				sys.stdout.flush()
+				#print("\r Epsilon ({}) ReplayMemorySize : ({}) rSum: ({}) best_epi_reward: ({}) OptiStep ({}) @ Episode {}/{}, loss: {}".format(eps, len_rp_memory, mean_epi_r, best_epi_r, opti_step, i + 1, num_episode, loss), end="")
+				#sys.stdout.flush()
 
 				action_probs = policy(sess, st, eps)
 				act = np.random.choice(np.arange(len(valid_actions)), p=action_probs)
@@ -420,21 +429,21 @@ if __name__ == '__main__':
 				rp_memory.append(Transition(st, act, r, stp1, env.done))
 
 				if len_rp_memory > rp_memory_init_size:
-					print("\n\n{{{{{{{{{{{{{{{{{{\n")
-					print(len_rp_memory)
-					print(rp_memory_init_size)
+					#print("\n\n{{{{{{{{{{{{{{{{{{\n")
+					#print(len_rp_memory)
+					#print(rp_memory_init_size)
 					# Sample a minibatch from the replay memory
 					samples = random.sample(rp_memory, size_batch)                
 					states_batch, action_batch, reward_batch, next_states_batch, done_batch = map(np.array, zip(*samples))
 				
-					print(action_batch, reward_batch, done_batch)
+					#print(action_batch, reward_batch, done_batch)
 
 					# We compute the next q value with                
 					q_values_next_target = t_net.predict(sess, next_states_batch)
-					print(q_values_next_target)
+					#print(q_values_next_target)
 					t_best_actions = np.argmax(q_values_next_target, axis=1)
-					print(t_best_actions)
-					targets_batch = reward_batch + np.invert(done_batch).astype(np.float32) * discount_fact * q_values_next_target[np.arange(batch_size), t_best_actions]
+					#print(t_best_actions)
+					targets_batch = reward_batch + np.invert(done_batch).astype(np.float32) * discount_fact * q_values_next_target[np.arange(size_batch), t_best_actions]
 					
 					# Perform gradient descent update
 					states_batch = np.array(states_batch)
@@ -470,16 +479,21 @@ if __name__ == '__main__':
 
 
 				st = stp1[:]
+				if i == num_episode-1:
+					env.show()
 				#env.show()
 			epi_r.append(r_sum)
 			if len(epi_r) > 100:
 				epi_r = epi_r[1:]
 			print("Win :", p.win_nb, "Lose :", p.lose_nb, "Timeout :", p.timeout_nb)
-			print(os.listdir("./checkpoints"))
+			#print(p.lastHundred)
+			print("Diff Win - Lose last 100:", sum(p.lastHundred))
+			
+			#print(os.listdir("./checkpoints"))
 
 			import time
 
-			print(os.listdir("./checkpoints"))
+			#print(os.listdir("./checkpoints"))
 			#input()
 
 				#p.saveQTable(exportFileQTable)
