@@ -34,8 +34,16 @@ class envA(object):
 		self.env.render()
 
 	def step(self, action):
+		get_actions(action)
+		print(set_actions()[action])
 		self._obs, _, self.done, _info = self.env.step(set_actions()[action])
 		self._rew = (self._info['enemy_health'] - _info['enemy_health']) - (self._info['health'] - _info['health']) / 50
+		self._info = _info
+		return self._obs, self._rew, self.done, self._info
+	
+	def defaultStep(self):
+		self._obs, _, self.done, _info = self.env.step(set_actions()[0])
+		self._rew += (self._info['enemy_health'] - _info['enemy_health']) - (self._info['health'] - _info['health']) / 50
 		self._info = _info
 		return self._obs, self._rew, self.done, self._info
 
@@ -139,6 +147,12 @@ class Network():
 
 ################################################
 
+def get_actions(act):
+	attack_names = ["neutral", "right", "left", "crouch", "crouch_right", "crouch_left", "jump_neutral", "jump_right", "jump_left", "standing_low_punch", "standing_medium_punch", "standing_high_punch", "standing_low_kick", "standing_medium_kick", "crouching_low_punch", "crouching_medium_punch", "crouching_high_punch", "crouching_low_kick", "crouching_medium_kick"]
+	print(attack_names[act])
+
+################################################
+
 def set_actions():
 	#Movements
 	neutral = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -165,6 +179,39 @@ def set_actions():
 
 
 	return [neutral, right, left, crouch, crouch_right, crouch_left, jump_neutral,jump_right, jump_left, standing_low_punch, standing_medium_punch, standing_high_punch, standing_low_kick, standing_medium_kick, crouching_low_punch, crouching_medium_punch, crouching_high_punch, crouching_low_kick, crouching_medium_kick]
+
+################################################
+
+def set_lags():
+	#L'aérien marche pas pareil
+	#Si il se faire toucher
+	#S'il touche
+
+	#Movements
+	neutralL = 0
+	rightL = 0 
+	leftL = 0
+	crouchL = 0
+	crouch_rightL = 0
+	crouch_leftL = 0
+	jump_neutralL = 3
+	jump_rightL = 3
+	jump_leftL = 3
+
+	#Normals
+	standing_low_punchL = 12
+	standing_medium_punchL = 23
+	standing_high_punchL = 35
+	standing_low_kickL = 20
+	standing_medium_kickL = 31
+	crouching_low_punchL = 11
+	crouching_medium_punchL = 14
+	crouching_high_punchL = 37
+	crouching_low_kickL = 11
+	crouching_medium_kickL = 18
+
+
+	return [neutralL, rightL, leftL, crouchL, crouch_rightL, crouch_leftL, jump_neutralL,jump_rightL, jump_leftL, standing_low_punchL, standing_medium_punchL, standing_high_punchL, standing_low_kickL, standing_medium_kickL, crouching_low_punchL, crouching_medium_punchL, crouching_high_punchL, crouching_low_kickL, crouching_medium_kickL]
 
 ################################################
 
@@ -224,6 +271,8 @@ if __name__ == '__main__':
 	size_batch = 32
 
 	opti_step = -1
+
+	inputLag = 0
 	
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
@@ -255,11 +304,16 @@ if __name__ == '__main__':
 				best_epi_r = mean_epi_r
 				saver.save(tf.get_default_session(), chkpnt_path)
 
-			act = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
 			len_rp_memory = len(rp_memory)
 
+			inputLag = 0
+			i = 0
 			while not env.is_finished():
+				i+=1
+				if (i < 122):
+					env.step(0)
+					continue
+				env.show()
 				eps = epss[min(opti_step+1, eps_decay_steps-1)]
 
 				if opti_step % update_target_estimator_every == 0:
@@ -269,8 +323,15 @@ if __name__ == '__main__':
 				sys.stdout.flush()
 
 				action_probs = policy(sess, st, eps)
-				act = np.random.choice(np.arange(len(valid_actions)), p=action_probs)
 
+				#input(inputLag)
+				if(inputLag > 0):
+					stp1, r, done, _ = env.defaultStep()
+					inputLag -= 1
+					continue
+				
+				act = np.random.choice(np.arange(len(valid_actions)), p=action_probs)
+				inputLag = set_lags()[act]
 
 				# Step in the env with this action
 				stp1, r, done, _ = env.step(act)
@@ -290,7 +351,6 @@ if __name__ == '__main__':
 				if done:
 					break
 				
-				env.show()
 
 			if len_rp_memory > rp_memory_init_size:
 				for i in range(100):
