@@ -20,6 +20,10 @@ class envA(object):
 		self._rew = None
 		self.done = False
 		self._info = {'enemy_matches_won': 0, 'score': 0, 'matches_won': 0, 'continuetimer': 0, 'enemy_health': 176,'health': 176}
+		self.lastHundred = []
+		self.win_nb = 0
+		self.lose_nb = 0
+		self.timeout_nb = 0
 
 	def reset(self):
 		self.done = False
@@ -30,33 +34,21 @@ class envA(object):
 		self.env.render()
 
 	def step(self, action):
-		#print("\n\n>>>>>>>>>>>>", action)
 		self._obs, _, self.done, _info = self.env.step(set_actions()[action])
-		self._rew = (self._info['enemy_health'] - _info['enemy_health']) - (self._info['health'] - _info['health'])
-		#print(self._rew)
-		#input()
-		"""if (_info['enemy_health'] < self._info['enemy_health']):
-			self._rew = 1
-		elif (_info['health'] < self._info['health']):
-			self._rew = -1
-		else:
-			self._rew = 0"""
+		self._rew = (self._info['enemy_health'] - _info['enemy_health']) - (self._info['health'] - _info['health']) / 50
 		self._info = _info
 		return self._obs, self._rew, self.done, self._info
 
-	def randomPlay(self):
-		return self.env.action_space.sample()
-
-	def is_finished(self, p):
+	def is_finished(self):
 		if self._info['enemy_health'] < 0:
-			p.lastHundred.append(1)
+			self.lastHundred.append(1)
 		elif self._info['health'] < 0:
-			p.lastHundred.append(-1)
-		if (len(p.lastHundred) > 100):
-			p.lastHundred.pop(0)
-		p.win_nb += 1 if self._info['enemy_health'] < 0 else 0
-		p.lose_nb += 1 if self._info['health'] < 0 else 0
-		p.timeout_nb += 1 if self.done else 0
+			self.lastHundred.append(-1)
+		if (len(self.lastHundred) > 100):
+			self.lastHundred.pop(0)
+		self.win_nb += 1 if self._info['enemy_health'] < 0 else 0
+		self.lose_nb += 1 if self._info['health'] < 0 else 0
+		self.timeout_nb += 1 if self.done else 0
 		if self._info['enemy_health'] < 0 or self._info['health'] < 0 or self.done:
 			return True
 		return False
@@ -74,50 +66,6 @@ class stateProcessor(object):
 
 	def process(self, sess, state)	:
 		return sess.run(self.output, {self.input_state:state})
-
-################################################
-
-class player(object):
-	def __init__(self):
-		super(player, self).__init__()
-		self.win_nb = 0.
-		self.timeout_nb = 0.
-		self.lose_nb = 0.
-		self.lastHundred = []
-		self.Q = np.zeros((65536, 21))
-
-	#Qtable is loaded from .npy file
-	def loadQTable(self, filename):
-		try:
-			self.Q = np.load("LearningFiles/" + filename + ".npy")
-		except IOError:
-			print("Could not read file : '" + filename + "'. QTable will be empty.")
-			self.Q = np.zeros((65536, 21))
-
-	#Qtable is saved as an .npy file
-	def saveQTable(self, filename):
-		np.save("LearningFiles/" + filename, self.Q)
-
-	def greedy_step(self, env):
-		print("greedy_step")
-		return 0
-
-	def train(self, st, net, stp1, r):
-		print(net.tf_st, '\n\n\n')
-		o, at, vt = sess.run([net.output, net.action, net.value], feed_dict={net.tf_st:st})
-		_, _, vtp1 = sess.run([net.output, net.action, net.value], feed_dict={net.tf_st: stp1})
-		target = [r + 0.99*vtp1]
-		_, err = sess.run([net.train_op, net.error], feed_dict={net.tf_st: st, net.tf_target: target, net.tf_action: at})
-		print("train")
-
-
-	def play(self, env, eps):
-		if random.uniform(0, 1) < eps:
-			action = env.randomPlay()
-		else:
-			action = self.greedy_step(env)
-			action = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-		return action
 
 ################################################
 
@@ -223,11 +171,8 @@ def set_actions():
 def make_eps_greedy_policy(estimator, nA):
 	def policy_fn(sess, observation, eps):
 		A = np.ones(nA, dtype=float) * eps / nA
-		#print("\n---------------------\nA =", A, "\n---------------------")
 		q_values = estimator.predict(sess, np.expand_dims(observation, 0))[0]
-		#print("\n---------------------\nq_values =", q_values, "\n---------------------")
 		best_act = np.argmax(q_values)
-		#print("\n---------------------\nbest_act =", best_act, "\n---------------------")
 		A[best_act] += (1.0 - eps)
 		return A
 	return policy_fn
@@ -249,74 +194,6 @@ def copy_model_parameters(sess, estimator1, estimator2):
 
 ################################################
 
-"""def play(env, state_processor, sess, epi_r, best_epi_r, chkpnt_path, rp_memory, epss, opti_step, eps_decay_steps, update_target_estimator_every, i, num_episodes, p, net, t_net, Transition):
-	st = env.reset()
-	st = np.stack([state_processor.process(sess, st)] * 4, axis=2)
-	loss = None
-	r_sum = 0
-	mean_epi_r = np.mean(epi_r)
-	if best_epi_r < mean_epi_r:
-		best_epi_r = mean_epi_r
-		saver.save(tf.get_default_session(), chkpnt_path)
-
-	print(st.shape)
-	env.show()
-
-	act = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-	len_rp_memory = len(rp_memory)
-
-	while not env.is_finished(p):
-		eps = epss[min(opti_step+1, eps_decay_steps-1)]
-
-		if opti_step % update_target_estimator_every == 0:
-			copy_model_parameters(sess, net, t_net)
-
-		print("\r Epsilon ({}) ReplayMemorySize : ({}) rSum: ({}) best_epi_reward: ({}) OptiStep ({}) @ Episode {}/{}, loss: {}".format(eps, len_rp_memory, mean_epi_r, best_epi_r, opti_step, i + 1, num_episodes, loss), end="")
-		sys.stdout.flush()
-
-		act = p.play(env, eps)
-
-		# Step in the env with this action
-		stp1, r, _, _ = env.step(act)
-
-		# Process image
-		stp1 = state_processor.process(sess, stp1)
-
-		# Add the image to the array
-		stp1 = np.append(st[:,:,1:], np.expand_dims(stp1, 2), axis=2)
-
-		if len(rp_memory) == 250000:
-			rp_memory.pop(0)
-
-		rp_memory.append(Transition(st, act, r, stp1, env.done))
-
-		if len_rp_memory > 50000:
-			samples = random.sample(rp_memory, 32)
-			st_batch, act_batch, r_batch, stp1_batch, done_batch = map(np.array, zip(*samples))
-
-			q_values_tp1 = t_net.predict(sess, stp1_batch)
-			t_best_act = np.argmax(q_values_tp1, axis=1)
-			t_batch = r_batch + np.invert(done_batch).astype(np.float32) * 0.99 * q_values_tp1[np.arange(32, t_best_act)]
-
-			st_batch = np.array(st_batch)
-			loss = net.update(sess, st_batch, act_batch, t_batch)
-
-			opti_step +=1
-		
-		st = stp1[:]
-		if done:
-			break
-
-
-		p.train(st, net, stp1, r)
-
-
-		st = stp1[:]
-		env.show()"""
-
-################################################
-
 if __name__ == '__main__':
 
 	# Create env
@@ -331,8 +208,8 @@ if __name__ == '__main__':
 
 	num_episode = 10000
 
-	rp_memory_size = 250000
-	rp_memory_init_size = 50000
+	rp_memory_size = 5000
+	rp_memory_init_size = 3000
 	rp_memory = []
 
 	update_target_estimator_every = 10000
@@ -348,7 +225,7 @@ if __name__ == '__main__':
 
 	opti_step = -1
 	
-	with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
+	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
 
 		Transition = namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
@@ -363,62 +240,43 @@ if __name__ == '__main__':
 		ladt_chckpnt = tf.train.latest_checkpoint(chkpnt_dir)
 
 		valid_actions = set_actions()
-		#print("000000000000000000000000000000000")
-		#print(len(valid_actions))
 		policy = make_eps_greedy_policy(net, len(valid_actions))
 
 		epi_r = []
 		best_epi_r = 0
 
-
-
-		p = player()
-		"""importFileQTable, exportFileQTable = handleArgs()
-		p.loadQTable(importFileQTable)"""
-
 		for i in range(num_episode):
-			if i == num_episode-1:
-				input("\n\n\n---------------------------------\nReady to launch\n")
-			if i % 100 == 0:
-				print(i)
-
 			st = env.reset()
-			st = np.stack([state_processor.process(sess, st)] * 4, axis=2)
+			st = np.stack([state_processor.process(sess, st) / 255] * 4, axis=2)
 			loss = None
 			r_sum = 0
 			mean_epi_r = np.mean(epi_r)
 			if best_epi_r < mean_epi_r:
-				#print(best_epi_r, mean_epi_r)
 				best_epi_r = mean_epi_r
 				saver.save(tf.get_default_session(), chkpnt_path)
-				#input()
-
-			#print(st.shape)
-			#env.show()
 
 			act = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 			len_rp_memory = len(rp_memory)
 
-			while not env.is_finished(p):
+			while not env.is_finished():
 				eps = epss[min(opti_step+1, eps_decay_steps-1)]
 
 				if opti_step % update_target_estimator_every == 0:
 					copy_model_parameters(sess, net, t_net)
 
-				#print("\r Epsilon ({}) ReplayMemorySize : ({}) rSum: ({}) best_epi_reward: ({}) OptiStep ({}) @ Episode {}/{}, loss: {}".format(eps, len_rp_memory, mean_epi_r, best_epi_r, opti_step, i + 1, num_episode, loss), end="")
-				#sys.stdout.flush()
+				print("\r Epsilon ({}) ReplayMemorySize : ({}) rSum: ({}) best_epi_reward: ({}) OptiStep ({}) @ Episode {}/{}, loss: {}".format(eps, len_rp_memory, mean_epi_r, best_epi_r, opti_step, i + 1, num_episode, loss), end="")
+				sys.stdout.flush()
 
 				action_probs = policy(sess, st, eps)
 				act = np.random.choice(np.arange(len(valid_actions)), p=action_probs)
 
-				#act = p.play(env, eps)
 
 				# Step in the env with this action
 				stp1, r, done, _ = env.step(act)
 				r_sum += r
 				# Process image
-				stp1 = state_processor.process(sess, stp1)
+				stp1 = state_processor.process(sess, stp1) / 255
 
 				# Add the image to the array
 				stp1 = np.append(st[:,:,1:], np.expand_dims(stp1, 2), axis=2)
@@ -427,75 +285,34 @@ if __name__ == '__main__':
 					rp_memory.pop(0)
 
 				rp_memory.append(Transition(st, act, r, stp1, env.done))
+				
+				st = stp1[:]
+				if done:
+					break
+				
+				env.show()
 
-				if len_rp_memory > rp_memory_init_size:
-					#print("\n\n{{{{{{{{{{{{{{{{{{\n")
-					#print(len_rp_memory)
-					#print(rp_memory_init_size)
+			if len_rp_memory > rp_memory_init_size:
+				for i in range(100):
+					print(i)
 					# Sample a minibatch from the replay memory
 					samples = random.sample(rp_memory, size_batch)                
 					states_batch, action_batch, reward_batch, next_states_batch, done_batch = map(np.array, zip(*samples))
-				
-					#print(action_batch, reward_batch, done_batch)
 
 					# We compute the next q value with                
 					q_values_next_target = t_net.predict(sess, next_states_batch)
-					#print(q_values_next_target)
 					t_best_actions = np.argmax(q_values_next_target, axis=1)
-					#print(t_best_actions)
 					targets_batch = reward_batch + np.invert(done_batch).astype(np.float32) * discount_fact * q_values_next_target[np.arange(size_batch), t_best_actions]
 					
 					# Perform gradient descent update
 					states_batch = np.array(states_batch)
 					loss = net.update(sess, states_batch, action_batch, targets_batch)
-					"""print("\n\n{{{{{{{{{{{{{{{{{{\n")
-					print(len_rp_memory)
-					print(rp_memory_init_size)
-					samples = random.sample(rp_memory, size_batch)
-					#print(samples)
-					st_batch, act_batch, r_batch, stp1_batch, done_batch = map(np.array, zip(*samples))
-					print(act_batch, r_batch, done_batch)
-					q_values_tp1 = t_net.predict(sess, stp1_batch)
-					print(q_values_tp1)
-					t_best_act = np.argmax(q_values_tp1, axis=1)
-					print(t_best_act)
-					temp1 = np.invert(done_batch).astype(np.float32)
-					temp2 = q_values_tp1[np.arange(32, t_best_act)]
-					t_batch = r_batch + temp1 * 0.99 * temp2
-					print(t_batch)
-					print("\n\n}}}}}}}}}}}}}}}}}}}\n")
-
-					st_batch = np.array(st_batch)
-					loss = net.update(sess, st_batch, act_batch, t_batch)"""
 
 					opti_step +=1
-				
-				st = stp1[:]
-				if done:
-					break
 
 
-				#p.train(st, net, stp1, r)
-
-
-				st = stp1[:]
-				if i == num_episode-1:
-					env.show()
-				#env.show()
 			epi_r.append(r_sum)
 			if len(epi_r) > 100:
 				epi_r = epi_r[1:]
-			print("Win :", p.win_nb, "Lose :", p.lose_nb, "Timeout :", p.timeout_nb)
-			#print(p.lastHundred)
-			print("Diff Win - Lose last 100:", sum(p.lastHundred))
-			
-			#print(os.listdir("./checkpoints"))
-
-			import time
-
-			#print(os.listdir("./checkpoints"))
-			#input()
-
-				#p.saveQTable(exportFileQTable)
-
-				#eps = max(eps * 0.999, 0.05)
+			print("Win :", env.win_nb, "Lose :", env.lose_nb, "Timeout :", env.timeout_nb)
+			print("Diff Win - Lose last 100:", sum(env.lastHundred))
