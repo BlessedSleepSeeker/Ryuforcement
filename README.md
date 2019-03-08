@@ -126,6 +126,9 @@ Right Throw = ?
 	* *_rew*: Reward of the AI
 	* *done*: bool who break the loop when the game is over
 	* *_info*: ```{'enemy_matches_won': 0, 'score': 0, 'matches_won': 0, 'continuetimer': 0, 'enemy_health': 176,'health': 176}```
+	
+### Tensorflow / Convolution
+http://cs231n.github.io/assets/conv-demo/index.html
 
 ### Lag Frames on Input
 
@@ -180,5 +183,9 @@ Specials Thanks to :
 
 Specials No-Thanks You to :
 * OpenAI Gym Retro environnement for his SHA requirement. >:(
+
+Usefull documents:
+* https://colab.research.google.com/drive/1UE2fv-FZ-HkzUJtIk4TKNWphlE33c3oP#scrollTo=ZcR_4CSp8CIe
+
 
 <div style="text-align:left"><img src ="https://raw.githubusercontent.com/Camille-Gouneau/Ryuforcement/master/img/TBagFramePerfect.gif" /></div>
