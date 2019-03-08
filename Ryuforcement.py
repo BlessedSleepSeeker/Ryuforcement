@@ -11,6 +11,12 @@ import matplotlib.pyplot as plt
 from collections import namedtuple
 
 ################################################
+# Made By Pierre-Eloy Sylvestre and Camille Gouneau
+# 18 December 2018 -> 8 March 2019
+# Please Check README.md and Have a Good Day
+
+################################################
+# Wrapping the Gym Retro environnement for more flexibility.
 
 class envA(object):
 	def __init__(self):
@@ -67,6 +73,7 @@ class stateProcessor(object):
 		return sess.run(self.output, {self.input_state:state})
 
 ################################################
+# Here's lie the Future Strongest Warrior (we hope).
 
 class player(object):
 	def __init__(self):
@@ -110,6 +117,7 @@ class player(object):
 		return action
 
 ################################################
+# Convolution Network here
 
 class Network():
 	def __init__(self, scope):
