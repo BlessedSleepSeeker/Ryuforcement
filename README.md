@@ -21,11 +21,11 @@ Ryuforcement plays Ryu. __**SHORYUKEN!!**__
 
 ### Requirements
 
-* OpenAi Gym Retro (https://github.com/openai/retro)
-* Tensorflow (https://www.tensorflow.org/)
-* SciPy (https://www.scipy.org/)
-* NumPy (http://www.numpy.org/)
-* Matplotlib (https://matplotlib.org/)
+* [OpenAi Gym Retro](https://github.com/openai/retro)
+* [Tensorflow](https://www.tensorflow.org/)
+* [SciPy](https://www.scipy.org/)
+* [NumPy](http://www.numpy.org/)
+* [Matplotlib](https://matplotlib.org/)
 
 ## Quick Start
 
@@ -126,7 +126,7 @@ Right Throw = ?
 	* *_rew*: Reward of the AI
 	* *done*: bool who break the loop when the game is over
 	* *_info*: ```{'enemy_matches_won': 0, 'score': 0, 'matches_won': 0, 'continuetimer': 0, 'enemy_health': 176,'health': 176}```
-	
+
 ### Tensorflow / Convolution
 http://cs231n.github.io/assets/conv-demo/index.html
 
@@ -140,15 +140,11 @@ We had a problem while training our fighter. Since he was the Perfect Player, hi
 
 To fix this, we imported the Frame Data, and added it to our AI. When Ryu is in a Lag State, he doesn't press buttons anymore, and patiently wait the end of his move before inputing something again.
 
-## Key Features
-
-Comming soon...
-
-## Results
-
 ### Training Details
 
 After some time, he started blocking certains attacks. He still sucks tho. We think that his opponent is too weak for him to learn effectively, since he will not get punished for a bad action every times.
+
+Final Update : After some time, we figured a major problem. The environnement wasn't useful at all. We could only play against the original AI of the game. This alone makes it super hard to make progress. The project is now stopped, and we moved on to other projects.
 
 ## Changelog & news
 
